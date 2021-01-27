@@ -8,4 +8,4 @@ def run_post(n):
     return r.json()
 
 if __name__ == "__main__":
-    run_post(2)
+    run_post(3)

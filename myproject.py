@@ -74,4 +74,4 @@ def api_delete():
 if __name__ == "__main__":
 	#bd.connection = bd.create_connection("app.db")
 	#bd.create_tables()
-	app.run(host='0.0.0.0')
+	app.run(host='0.0.0.0') 
