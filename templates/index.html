@@ -1,0 +1,25 @@
+<html>
+
+<head>
+    <title>API:</title>
+</head>
+
+<body>
+    <h1 style='color:black'>API:</h1>
+    <br>POST:</br>
+    <ul>
+        <li><a href="/">/api/n</a> , format json = {"number": INT} , response json = {"status": "Ok/Error", "number" :
+            INT , "datetime": "" , "info" : ""}</li>
+        <li><a href="/api/n/1"> /api/n/INT:param</a> , response json = {"status": "Ok/Error", "number" : INT ,
+            "datetime": "" , "info" : ""}</li>
+    </ul>
+    <br>GET:</br>
+    <ul>
+        <li><a href="/api/log">/api/log</a>, get list of log , format json = {"id" = INT, "number" : INT , "datetime":
+            "" , "info" : ""}</li>
+        <li><a href="/api/nums">/api/nums</a> , get list of data , format json = {"id" = INT, "number" : INT ,
+            "datetime": "" }</li>
+    </ul>
+</body>
+
+</html>
