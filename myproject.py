@@ -1,6 +1,4 @@
 from flask import Flask, jsonify, request , render_template
-import bd
-import os
 from datetime import datetime
 
 app = Flask(__name__)
