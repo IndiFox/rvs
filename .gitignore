@@ -1,4 +1,4 @@
 /.env
-/.app.log
+/app.log
 /.flaskenv
 /__pycache__
