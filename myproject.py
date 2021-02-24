@@ -1,77 +1,79 @@
 from flask import Flask, jsonify, request , render_template
-import bd
-import os
 from datetime import datetime
+import logging
+import redis
+import os
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 
-list_num = []
-list_log = []
+#my_redis - name of docker container
+r = redis.Redis(host=os.environ.get('IP_REDIS'), port=os.environ.get('PORT_REDIS'))
 
 @app.route("/")
 def index():
-    return render_template("/index.html")
+	logging.info("The index page is opened!")
+	try:
+		return render_template('/index.html')
+	except:
+		data = dict(status = "Error" , datetime=str(datetime.now()), info='Some trouble with main page')
+		return jsonify(data)
 
 @app.route("/api/n", methods=['POST'])
 def api_number():
 	try:
 		data = request.get_json()
-		number = int(data['number'])
-		if number<0:
-			raise Exception("Number less 0")
-		return api_number_par(number)
+		n = int(data['number'])
+		return api_number_par(n)
 	except:
-		return jsonify({'status': "Error"})
+		data = dict(status = "Error" , number=n, datetime=str(datetime.now()), info='Some trouble with request or format')
+		return jsonify(data)
 
 @app.route("/api/n/<int:n>")
 def api_number_par(n):
 	now_time = str(datetime.now())
 	try:
-		# if(bd.number_in(n)):
-		if(len(list(filter(lambda x: x[1]==n or x[1]==n+1, list_num)))):
-			# bd.add_log(n, 'Number or next number in db')
-			list_log.append([0,n,now_time,'Number or next number in db'])
-			data = dict(status = "Error" , number=n, datetime=now_time, info='Number or next number in db')
+		if(r.sismember("nums",str(n))):
+			data = dict(status = "Error" , number=n, datetime=now_time, info='Number in DB')
+			logging.error("Number {} in DB.\n".format(n))
+			return jsonify(data)
+		elif(r.sismember("nums", str(n+1))):
+			data = dict(status = "Error" , number=n, datetime=now_time, info='Next number in DB')
+			logging.error("Next number {} in DB.\n".format(n))
 			return jsonify(data)
 		else:
-			# bd.add_number(n)
-			list_num.append([0,n,now_time])
+			r.sadd("nums",str(n))
+			logging.info("Number {} is added".format(n))
 			data = dict(status = "Ok", number = n+1, datetime = now_time)
 			return jsonify(data)
 	except:
-		return jsonify({'status': "Error"})
-
-@app.route("/api/log",methods=['GET'])
-def api_log():
-    #list_log = bd.logs()
-	response = []
-	try:
-		for l in list_log:
-			response.append(dict(id = 0, number=l[1], datetime=l[2], info=l[3]))
-		return(jsonify(response))
-	except:
-		return jsonify({'status': "Error"})
+		data = dict(status = "Error" , number=n, datetime=now_time, info='Somethings happens with writing to BD or exceptions.')
+		return jsonify(data)
 
 @app.route("/api/nums",methods=['GET'])
 def api_nums():
-    #list_num = bd.numbers()
 	response = []
 	try:
-		for l in list_num:
-			response.append(dict(id = 0, number=l[1], datetime=l[2]))
+		#Размер базы должен быть меньше 2^32-1;
+		len_n = r.scard("nums")  	#CHECK
+		numbers = r.smembers("nums")
+		for n in numbers:
+			response.append(dict(number=str(n)))
 		return(jsonify(response))
 	except:
-		return jsonify({'status': "Error"})
+		data = dict(status = "Error" , datetime=str(datetime.now()), info='Some trouble with BD or sending response.')
+		return jsonify(data)
 
-@app.route("/api/delete")
-def api_delete():
-	try:
-		#bd.delete()
-		return jsonify({'status': "OK"})
-	except:
-		return jsonify({'status': "Error"})
 
 if __name__ == "__main__":
-	#bd.connection = bd.create_connection("app.db")
-	#bd.create_tables()
-	app.run(host='0.0.0.0') 
+	#Определение пути к файлу с переменными среды
+	dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+	#Загазка переменных среды из файла
+	if os.path.exists(dotenv_path):
+		load_dotenv(dotenv_path)
+	#Определение имени файла лога, формата записи, режима доступа к файлу и урованя логирования.
+	logging.basicConfig(filename=os.environ.get('APP_LOG'), filemode='w', format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+	logging.basicConfig(level=logging.DEBUG) #https://webdevblog.ru/logging-v-python/
+	#По умолчанию функция запуска берет данные хоста и порта из перменных среды.
+	app.run()
