@@ -2,10 +2,14 @@ from flask import Flask, jsonify, request , render_template
 from datetime import datetime
 import logging
 import redis
+import os
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
+
 #my_redis - name of docker container
-r = redis.Redis(host='my_redis', port=6379)
+r = redis.Redis(host=os.environ.get('IP_REDIS'), port=os.environ.get('PORT_REDIS'))
 
 @app.route("/")
 def index():
@@ -63,6 +67,13 @@ def api_nums():
 
 
 if __name__ == "__main__":
-	logging.basicConfig(filename='app.log', filemode='w', format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+	#Определение пути к файлу с переменными среды
+	dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+	#Загазка переменных среды из файла
+	if os.path.exists(dotenv_path):
+		load_dotenv(dotenv_path)
+	#Определение имени файла лога, формата записи, режима доступа к файлу и урованя логирования.
+	logging.basicConfig(filename=os.environ.get('APP_LOG'), filemode='w', format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 	logging.basicConfig(level=logging.DEBUG) #https://webdevblog.ru/logging-v-python/
-	app.run(host='0.0.0.0') 
+	#По умолчанию функция запуска берет данные хоста и порта из перменных среды.
+	app.run()

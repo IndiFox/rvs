@@ -1,1 +1,4 @@
-/app.db
+/.env
+/.app.log
+/.flaskenv
+/__pycache__
