@@ -8,8 +8,13 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 
+
 #my_redis - name of docker container
-r = redis.Redis(host=os.environ.get('IP_REDIS'), port=os.environ.get('PORT_REDIS'))
+try:
+	r = redis.Redis(host=str(os.environ.get('REDIS_SERVICE_SERVICE_HOST')) if os.environ.get("HOST_FROM")== "env" else os.environ.get("HOST_FROM"), port=os.environ.get('REDIS_SERVICE_SERVICE_PORT'))
+except redis.ConnectionError:
+	logging.error("Connection with DB failed\n")
+	
 
 @app.route("/")
 def index():
@@ -27,10 +32,11 @@ def api_number():
 		n = int(data['number'])
 		return api_number_par(n)
 	except:
-		data = dict(status = "Error" , number=n, datetime=str(datetime.now()), info='Some trouble with request or format')
+		data = dict(status = "Error" , number=0, datetime=str(datetime.now()), info='Some trouble with request or format')
+		logging.exception(data)
 		return jsonify(data)
 
-@app.route("/api/n/<int:n>")
+@app.route("/api/n/<int:n>", methods=['POST'])
 def api_number_par(n):
 	now_time = str(datetime.now())
 	try:
@@ -49,6 +55,7 @@ def api_number_par(n):
 			return jsonify(data)
 	except:
 		data = dict(status = "Error" , number=n, datetime=now_time, info='Somethings happens with writing to BD or exceptions.')
+		logging.exception(data)
 		return jsonify(data)
 
 @app.route("/api/nums",methods=['GET'])
@@ -63,17 +70,20 @@ def api_nums():
 		return(jsonify(response))
 	except:
 		data = dict(status = "Error" , datetime=str(datetime.now()), info='Some trouble with BD or sending response.')
+		logging.exception(data)
 		return jsonify(data)
 
 
 if __name__ == "__main__":
 	#Определение пути к файлу с переменными среды
 	dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-	#Загазка переменных среды из файла
+	#Загрузка переменных среды из файла, переменные не перезаписываются.
 	if os.path.exists(dotenv_path):
 		load_dotenv(dotenv_path)
 	#Определение имени файла лога, формата записи, режима доступа к файлу и урованя логирования.
-	logging.basicConfig(filename=os.environ.get('APP_LOG'), filemode='w', format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-	logging.basicConfig(level=logging.DEBUG) #https://webdevblog.ru/logging-v-python/
+	logging.basicConfig(filename='rvs_app.log', filemode='w',level=logging.DEBUG, format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S') #https://webdevblog.ru/logging-v-python/
+	#logging.basicConfig(filename=os.environ.get('APP_LOG'), filemode='w', format='%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 	#По умолчанию функция запуска берет данные хоста и порта из перменных среды.
-	app.run()
+	app.run(host= os.environ.get("FLASK_RUN_HOST"), port = os.environ.get("FLASK_RUN_PORT"))
+
+	#docker exec  -it  f40e61efd9b7 sh
