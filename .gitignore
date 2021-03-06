@@ -1,4 +1,5 @@
 /.env
-/.app.log
+/rvs_app.log
 /.flaskenv
 /__pycache__
+/some-helps.txt
