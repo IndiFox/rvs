@@ -2,9 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: rvs-app-ingress
+  annotations:
+    haproxy.org/ingress.class: haproxy
+  namespace: ns-14
 spec:
   rules:
-    - host: node-5.hse.rvc
+    - host: node-14.fergus.host
       http:
         paths:
           - path: /
