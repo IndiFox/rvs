@@ -21,8 +21,7 @@ spec:
     spec:
       containers:
       - name: rvs-app-container
-        image: rvs_test
-        imagePullPolicy: Never
+        image: ammarchyk/rvs_app
         env: 
         - name: HOST_FROM
           value: env
